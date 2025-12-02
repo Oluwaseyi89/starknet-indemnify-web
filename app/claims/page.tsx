@@ -38,10 +38,15 @@ import {
   ProviderInterface,
   hash,
   uint256,
+  RpcProvider
 } from "starknet";
 import { PolicyClass, convertPolicyClassToCode, stringToHex, hexToBigInt, StarknetEvent } from "@/lib/utils";
 
 import claimsAbi from "../../contract_abis/claims_contract.json" assert { type: "json" }; 
+
+const provider = new RpcProvider({
+  nodeUrl: process.env.NEXT_PUBLIC_RPC_URL!
+});
 
 
 export default function ClaimsPage() {
@@ -50,7 +55,7 @@ export default function ClaimsPage() {
     user,
     address,
     account,
-    provider,
+    // provider,
     claims,
     createClaim,
     updateClaim,

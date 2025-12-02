@@ -1,6 +1,6 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 import { useRootStore } from "@/stores/use-root-store";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -15,11 +15,23 @@ import {
   type ProviderInterface,
   type InvokeFunctionResponse,
   type GetTransactionReceiptResponse,
+  RpcProvider
 } from "starknet";
-import { PaymentStatus, StarknetEvent, hexToBigInt } from "@/lib/utils";
+import { PaymentStatus, StarknetEvent, hexToBigInt, refineStarknetResponse } from "@/lib/utils";
 import ProtectedRoute from "@/components/guards/ProtectedRoute";
 
 import treasuryAbi from "../../contract_abis/treasury_contract.json" assert { type: "json" }; 
+import proposalAbi from "../../contract_abis/proposal_contract.json" assert { type: "json" }; 
+
+
+
+const provider = new RpcProvider({
+  nodeUrl: process.env.NEXT_PUBLIC_RPC_URL!
+});
+
+
+
+
 
 
 
@@ -27,7 +39,7 @@ export default function PaymentPage() {
   const {
     user,
     account,
-    provider,
+    // provider,
     proposals,
     fetchProposalsByUser,
     premiumPayments,
@@ -68,6 +80,9 @@ export default function PaymentPage() {
     connectWallet();
   }, [connectWallet]);
 
+ 
+ 
+
   // Filter approved proposals
   const approvedProposals = proposals.filter(
     (p) => p.riskAnalyticsApproved && p.governanceApproved && !p.isPremiumPaid
@@ -98,11 +113,13 @@ export default function PaymentPage() {
       }
   
       console.log("Proposal ID: ", proposal.proposalId);
+      const premium_payable = proposal.premiumPayable
   
       // ✅ Prepare calldata for Starknet contract
       const calldata = new CallData(treasuryAbi).compile("pay_premium", {
         proposal_id: uint256.bnToUint256(BigInt(parseInt(proposal.proposalId))),
         payer_address: address,
+        premium_amount: uint256.bnToUint256(BigInt(parseInt(premium_payable)))
       });
   
       const contractAddress = process.env.NEXT_PUBLIC_TREASURY_CONTRACT!;
@@ -228,13 +245,19 @@ export default function PaymentPage() {
     }
   
     setIsSubmitting(true);
+
+    console.log("Buyer Address: ", address);
+    console.log("Quantity Purchased: ", buyQuantity);
   
     try {
       // ✅ Prepare calldata for Starknet contract
       const calldata = new CallData(treasuryAbi).compile("purchase_stindem", {
         buyer_address: address,
-        quantity: uint256.bnToUint256(BigInt(buyQuantity)),
+        quantity: uint256.bnToUint256(BigInt(parseInt(buyQuantity))),
       });
+
+     
+
   
       const contractAddress = process.env.NEXT_PUBLIC_TREASURY_CONTRACT!;
       console.log("Treasury Contract:", contractAddress);
@@ -367,7 +390,7 @@ export default function PaymentPage() {
       // ✅ Prepare calldata
       const calldata = new CallData(treasuryAbi).compile("recover_stindem_from_market", {
         seller_address: address,
-        quantity: uint256.bnToUint256(BigInt(sellQuantity)),
+        quantity: uint256.bnToUint256(BigInt(parseInt(sellQuantity))),
       });
   
       const contractAddress = process.env.NEXT_PUBLIC_TREASURY_CONTRACT!;

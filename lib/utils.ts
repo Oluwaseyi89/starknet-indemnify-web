@@ -334,4 +334,72 @@ export const hexToText = (hexArray: string[]): string => {
   const bytes = hexArray.map(hex => parseInt(hex, 16));
   return new TextDecoder().decode(new Uint8Array(bytes));
 };
+
+
+
+// utils/refineStarknetResponse.ts
+
+/**
+ * Refines a raw Starknet contract response into a clean, human-readable format.
+ * Converts timestamps, Cairo enums, and large numbers (addresses) to hex.
+ */
+export function refineStarknetResponse(raw: any): any {
+  if (!raw || typeof raw !== "object") return raw;
+
+  const refined: Record<string, any> = {};
+
+  for (const [key, value] of Object.entries(raw)) {
+    // Case 1: numeric strings
+    if (typeof value === "string" && /^\d+$/.test(value)) {
+      const numValue = BigInt(value);
+
+      // Detect timestamps (1B–9B range)
+      if (numValue > BigInt(1_000_000_000) && numValue < BigInt(10_000_000_000)) {
+        refined[key] = new Date(Number(numValue) * 1000).toISOString();
+      }
+
+      // Detect extremely large numbers (likely felt252 addresses)
+      else if (numValue > BigInt((2 ** 128))) {
+        refined[key] = "0x" + numValue.toString(16);
+      }
+
+      // Regular numeric values — leave as stringified bigint
+      else {
+        refined[key] = numValue.toString();
+      }
+    }
+
+
+    else if (
+      value &&
+      typeof value === "object" &&
+      "variant" in value &&
+      value.variant &&
+      typeof (value as any).variant === "object"
+    ) {
+      const variant = (value as { variant: Record<string, unknown> }).variant;
+      const variantKeys = Object.keys(variant);
+      refined[key] = variantKeys.length > 0 ? variantKeys[0] : null;
+    }
+    
+
+    // Case 3: Booleans
+    else if (typeof value === "boolean") {
+      refined[key] = value;
+    }
+
+    // Case 4: Nested objects
+    else if (typeof value === "object" && value !== null) {
+      refined[key] = refineStarknetResponse(value);
+    }
+
+    // Default
+    else {
+      refined[key] = value;
+    }
+  }
+
+  return refined;
+}
+
   

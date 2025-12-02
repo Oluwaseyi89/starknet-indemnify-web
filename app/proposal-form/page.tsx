@@ -51,10 +51,19 @@ import {
   GetTransactionReceiptResponse,
   ProviderInterface,
   uint256,
- 
+  RpcProvider 
 } from "starknet";
 
 import proposalAbi from "../../contract_abis/proposal_contract.json" assert { type: "json" }; 
+
+
+const provider = new RpcProvider({
+  nodeUrl: process.env.NEXT_PUBLIC_RPC_URL!
+});
+
+
+console.log("MY Provider: ", provider);
+
 
 
 export default function ProposalPage() {
@@ -71,7 +80,7 @@ export default function ProposalPage() {
     executeTransaction,
     account,
     address,
-    provider,
+    // provider,
     restoreConnection,
     connectWallet,
   } = useRootStore();

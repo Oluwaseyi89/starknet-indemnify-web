@@ -3,8 +3,9 @@ import type { Metadata } from 'next';
 import { Inter } from 'next/font/google';
 import Header from '@/components/layout/Header';
 import Footer from '@/components/layout/Footer';
-// import WalletProvider from '@/components/providers/WalletProvider';
 import Script from 'next/script'; // <-- add this
+
+// import WalletProvider from '@/components/providers/WalletProvider';
 import { ChipiProvider, useChipiContext, type ChipiSDKConfig } from '@chipi-pay/chipi-sdk';
 
 import { StoreProvider } from '@/stores/store-provider';
